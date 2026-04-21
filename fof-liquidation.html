@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOF 清算管理系统</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+  }
+
+  /* ===== 登录界面 ===== */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #0f2645 0%, #1a3a5c 40%, #2563a8 100%);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.4s, visibility 0.4s;
+  }
+  .login-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .login-box {
+    background: white;
+    border-radius: 16px;
+    padding: 48px 40px 40px;
+    width: 420px;
+    max-width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+  }
+  .login-logo {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, #1a3a5c, #2563a8);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 20px;
+    box-shadow: 0 4px 16px rgba(37,99,168,0.3);
+  }
+  .login-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin-bottom: 4px;
+  }
+  .login-subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 32px;
+  }
+  .login-input-group {
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .login-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .login-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e4ea;
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #333;
+  }
+  .login-input:focus {
+    border-color: #2563a8;
+    box-shadow: 0 0 0 3px rgba(37,99,168,0.15);
+  }
+  .login-input::placeholder { color: #bbb; }
+  .login-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1a3a5c, #2563a8);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 1px;
+  }
+  .login-btn:hover { opacity: 0.9; }
+  .login-btn:active { transform: scale(0.98); }
+  .login-error {
+    color: #dc2626;
+    font-size: 13px;
+    margin-top: 12px;
+    min-height: 20px;
+  }
+  .login-hint {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 20px;
+    line-height: 1.6;
+  }
+
+  /* ===== 顶部标题栏 ===== */
+  .header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2563a8 100%);
+    color: white;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-logo {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header-title { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  .header-sub { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .user-name { font-weight: 600; }
+  .user-role {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .role-admin { background: rgba(255,255,255,0.25); color: #fff; }
+  .role-collab { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
+  .btn-logout {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+  /* ===== 标签页 ===== */
+  .tabs-wrapper {
+    background: #fff;
+    border-bottom: 1px solid #e0e4ea;
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+  }
+  .tab-btn {
+    padding: 14px 28px;
+    border: none;
+    background: none;
+    font-size: 15px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .tab-btn:hover { color: #2563a8; }
+  .tab-btn.active {
+    color: #2563a8;
+    border-bottom-color: #2563a8;
+    font-weight: 700;
+  }
+  .tab-badge {
+    display: inline-block;
+    background: #e53e3e;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  /* ===== 页面内容 ===== */
+  .tab-content { display: none; padding: 28px 32px; }
+  .tab-content.active { display: block; }
+
+  /* ===== 卡片 ===== */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a3a5c;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 18px;
+    background: #2563a8;
+    border-radius: 2px;
+  }
+  .card-body { padding: 20px 24px; }
+
+  /* ===== 表单区域 ===== */
+  .form-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .form-table th {
+    background: #f5f7fa;
+    color: #555;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    border: 1px solid #e8ecf0;
+    white-space: nowrap;
+  }
+  .form-table td {
+    padding: 8px 8px;
+    border: 1px solid #e8ecf0;
+    vertical-align: middle;
+  }
+  .form-table tr:hover td { background: #fafbff; }
+
+  .form-input {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #d0d7e3;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    color: #333;
+  }
+  .form-input:focus { border-color: #2563a8; box-shadow: 0 0 0 2px rgba(37,99,168,0.1); }
+
+  .form-select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #d0d7e3;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    background: white;
+    cursor: pointer;
+    color: #333;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  .form-select:focus { border-color: #2563a8; box-shadow: 0 0 0 2px rgba(37,99,168,0.1); }
+  .form-select:disabled { background-color: #f5f5f5; color: #aaa; cursor: not-allowed; }
+
+  /* ===== 按钮 ===== */
+  .btn {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .btn-primary { background: #2563a8; color: white; }
+  .btn-primary:hover { background: #1a4f8a; }
+  .btn-success { background: #16a34a; color: white; }
+  .btn-success:hover { background: #14803c; }
+  .btn-warning { background: #d97706; color: white; }
+  .btn-warning:hover { background: #b45309; }
+  .btn-danger { background: #dc2626; color: white; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-purple { background: #7c3aed; color: white; }
+  .btn-purple:hover { background: #6d28d9; }
+  .btn-info { background: #0891b2; color: white; }
+  .btn-info:hover { background: #0e7490; }
+  .btn-outline { background: white; color: #2563a8; border: 1px solid #2563a8; }
+  .btn-outline:hover { background: #eff6ff; }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+
+  .btn-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* ===== 提交记录表格 ===== */
+  .record-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .record-table th {
+    background: #f5f7fa;
+    color: #555;
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid #e0e4ea;
+  }
+  .record-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+  }
+  .record-table tr:hover td { background: #f8faff; }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .tag-yes { background: #dcfce7; color: #16a34a; }
+  .tag-no { background: #fee2e2; color: #dc2626; }
+  .tag-redeem { background: #dbeafe; color: #2563a8; }
+  .tag-agree { background: #f3e8ff; color: #7c3aed; }
+  .tag-below2 { background: #fef3c7; color: #92400e; }
+  .tag-pending { background: #fef9c3; color: #ca8a04; }
+  .tag-done { background: #dcfce7; color: #16a34a; }
+  .tag-partial { background: #fff7ed; color: #ea580c; }
+  .tag-admin { background: #dbeafe; color: #1d4ed8; }
+  .tag-collab { background: #f0fdf4; color: #15803d; }
+
+  /* ===== 云平台 - 待办卡片 ===== */
+  .todo-card {
+    background: #fff;
+    border: 1px solid #e8ecf0;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .todo-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .todo-card-top {
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1px solid #f0f2f5;
+  }
+  .todo-product-info { flex: 1; }
+  .todo-product-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin-bottom: 6px;
+  }
+  .todo-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #666;
+  }
+  .todo-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .todo-meta-label {
+    color: #999;
+    font-size: 12px;
+  }
+  .todo-meta-value {
+    font-weight: 500;
+    color: #333;
+  }
+  .todo-status-area {
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+  .todo-progress-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2563a8;
+  }
+  .todo-progress-text.done { color: #16a34a; }
+
+  /* 流程按钮区域 */
+  .todo-flow {
+    padding: 16px 20px;
+    background: #fafbfc;
+  }
+  .todo-flow-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .flow-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+  }
+  .flow-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .flow-step-btn {
+    width: 100%;
+    padding: 8px 6px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    line-height: 1.3;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .flow-step-btn.locked {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #d1d5db;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .flow-step-btn.active {
+    background: #2563a8;
+    border-color: #1d4e8a;
+    color: white;
+    box-shadow: 0 2px 8px rgba(37,99,168,0.3);
+    animation: pulse-glow 2s infinite;
+  }
+  .flow-step-btn.done-step {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+    cursor: default;
+    pointer-events: none;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 2px 8px rgba(37,99,168,0.3); }
+    50% { box-shadow: 0 2px 16px rgba(37,99,168,0.5); }
+  }
+
+  /* 箭头连接符 */
+  .flow-arrow {
+    flex-shrink: 0;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d1d5db;
+    font-size: 14px;
+    margin-top: -16px;
+  }
+  .flow-arrow.done-arrow { color: #86efac; }
+
+  .flow-step-date {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 4px;
+    text-align: center;
+  }
+
+  /* ===== 清算跟踪 ===== */
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .search-input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid #d0d7e3;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: #2563a8; box-shadow: 0 0 0 2px rgba(37,99,168,0.1); }
+
+  .track-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .track-header {
+    padding: 14px 20px;
+    background: #f8faff;
+    border-bottom: 1px solid #e8ecf8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .track-title { font-weight: 700; font-size: 15px; color: #1a3a5c; }
+  .track-code { font-size: 12px; color: #888; margin-top: 2px; }
+  .track-body { padding: 20px; }
+
+  /* 进度条 */
+  .progress-steps {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin: 10px 0 6px;
+    position: relative;
+  }
+  .progress-steps::before {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    height: 2px;
+    background: #e0e4ea;
+    z-index: 0;
+  }
+  .step-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .step-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    border: 2px solid #e0e4ea;
+    background: #fff;
+    color: #aaa;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+  }
+  .step-dot.done { background: #16a34a; border-color: #16a34a; color: white; }
+  .step-dot.active { background: #2563a8; border-color: #2563a8; color: white; box-shadow: 0 0 0 4px rgba(37,99,168,0.15); }
+  .step-dot.pending { background: #fff; border-color: #d1d5db; color: #ccc; }
+  .step-label { font-size: 12px; text-align: center; color: #666; line-height: 1.3; max-width: 80px; }
+  .step-label.active { color: #2563a8; font-weight: 600; }
+  .step-label.done { color: #16a34a; }
+  .step-date { font-size: 11px; color: #aaa; margin-top: 3px; text-align: center; }
+
+  /* 空状态 */
+  .empty-state { text-align: center; padding: 48px 20px; color: #aaa; }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* 响应式 */
+  @media (max-width: 900px) {
+    .tab-content { padding: 16px; }
+    .tabs-wrapper { padding: 0 16px; }
+    .header { padding: 12px 16px; }
+    .flow-steps { flex-wrap: wrap; gap: 6px; }
+    .flow-arrow { display: none; }
+    .flow-step { min-width: calc(50% - 4px); }
+  }
+
+  /* 模态框 */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 12px;
+    padding: 28px;
+    max-width: 520px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .modal-title { font-size: 18px; font-weight: 700; color: #1a3a5c; margin-bottom: 16px; }
+  .modal-content { font-size: 14px; color: #555; line-height: 1.8; }
+  .modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* 数字统计 */
+  .stat-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .stat-card {
+    flex: 1;
+    background: linear-gradient(135deg, #1a3a5c, #2563a8);
+    color: white;
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .stat-card.green { background: linear-gradient(135deg, #065f46, #16a34a); }
+  .stat-card.orange { background: linear-gradient(135deg, #92400e, #d97706); }
+  .stat-num { font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+
+  .divider { height: 1px; background: #f0f0f0; margin: 16px 0; }
+
+  /* 通知提示 */
+  .toast {
+    position: fixed;
+    top: 20px; right: 20px;
+    background: #16a34a;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 2000;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.error { background: #dc2626; }
+  .toast.warning { background: #d97706; }
+
+  /* 权限提示 */
+  .perm-tip {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 清算流程查询弹窗 */
+  .track-popup-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1500;
+    align-items: center;
+    justify-content: center;
+  }
+  .track-popup-overlay.show { display: flex; }
+  .track-popup {
+    background: white;
+    border-radius: 14px;
+    max-width: 720px;
+    width: 92%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  }
+  .track-popup-header {
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #1a3a5c, #2563a8);
+    color: white;
+    border-radius: 14px 14px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .track-popup-header h3 { font-size: 16px; font-weight: 700; margin: 0; }
+  .track-popup-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .track-popup-close:hover { background: rgba(255,255,255,0.35); }
+  .track-popup-body { padding: 24px; }
+</style>
+</head>
+<body>
+
+<!-- ==================== 登录界面 ==================== -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">📊</div>
+    <div class="login-title">FOF 清算管理系统</div>
+    <div class="login-subtitle">Fund of Funds Liquidation Management Platform</div>
+    <div class="login-input-group">
+      <label class="login-label" for="login-name">请输入您的姓名</label>
+      <input type="text" class="login-input" id="login-name" placeholder="例如：张三" autocomplete="off" autofocus>
+    </div>
+    <button class="login-btn" onclick="handleLogin()">进 入 系 统</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-hint">
+      系统根据姓名自动分配权限，无需密码<br>
+      管理员可查看所有数据和功能模块
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 主界面（登录后可见） ==================== -->
+<div id="app-main" style="display:none;">
+
+<!-- 顶部标题 -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">📊</div>
+    <div>
+      <div class="header-title">FOF 清算管理系统</div>
+      <div class="header-sub">Fund of Funds Liquidation Management Platform</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="user-info">
+      <div class="user-avatar" id="user-avatar">U</div>
+      <div>
+        <div class="user-name" id="user-name-display">—</div>
+        <span class="user-role" id="user-role-tag">协作者</span>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="handleLogout()">退出登录</button>
+  </div>
+</div>
+
+<!-- 标签页 -->
+<div class="tabs-wrapper" id="tabs-wrapper">
+  <button class="tab-btn active" data-tab="wefund" onclick="switchTab('wefund', this)">🏦 WeFund</button>
+  <button class="tab-btn" data-tab="cloud" onclick="switchTab('cloud', this)" id="tab-btn-cloud">
+    ☁️ 云平台
+    <span class="tab-badge" id="cloud-badge">0</span>
+  </button>
+  <button class="tab-btn" data-tab="track" onclick="switchTab('track', this)" id="tab-btn-track">🔍 清算跟踪</button>
+</div>
+
+<!-- ==================== WEFUND 页面 ==================== -->
+<div class="tab-content active" id="tab-wefund">
+
+  <div class="stat-row" id="stat-row-wefund">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-total">0</div>
+      <div class="stat-label">累计提交记录</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-num" id="stat-liq">0</div>
+      <div class="stat-label">清算中产品</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-num" id="stat-pending">0</div>
+      <div class="stat-label">待处理</div>
+    </div>
+  </div>
+
+  <!-- 收集表 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">清算信息收集表</div>
+      <button class="btn btn-outline btn-sm" onclick="addFormRow()">＋ 新增一行</button>
+    </div>
+    <div class="card-body" style="overflow-x:auto;">
+      <table class="form-table" id="collect-form">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th style="min-width:160px;">FOF产品名称 <span style="color:#e53e3e;">*</span></th>
+            <th style="min-width:130px;">FOF产品代码 <span style="color:#e53e3e;">*</span></th>
+            <th style="min-width:110px;">是否清算 <span style="color:#e53e3e;">*</span></th>
+            <th style="min-width:140px;">清算原因</th>
+            <th style="min-width:150px;">赎回/协商一致日期</th>
+            <th style="min-width:150px;">清算资金到账时间</th>
+            <th style="min-width:80px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="form-body"></tbody>
+      </table>
+      <div class="divider"></div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn btn-outline" onclick="clearForm()">清空表格</button>
+        <button class="btn btn-primary" onclick="submitForm()">📤 提交全部</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提交记录 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title" id="records-title">提交记录查看</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-outline btn-sm" id="btn-clear-all" onclick="clearAllData()" title="清除所有本地存储的记录和待办" style="display:none;">🗑️ 清除数据</button>
+        <input type="text" class="form-input" id="record-search" placeholder="搜索产品名称/代码..." oninput="filterRecords()" style="width:200px;">
+        <button class="btn btn-outline btn-sm" onclick="exportRecords()">📥 导出</button>
+      </div>
+    </div>
+    <div class="card-body" style="overflow-x:auto;">
+      <table class="record-table">
+        <thead>
+          <tr>
+            <th>提交时间</th>
+            <th>FOF产品名称</th>
+            <th>FOF产品代码</th>
+            <th>是否清算</th>
+            <th>清算原因</th>
+            <th>日期</th>
+            <th>清算资金到账时间</th>
+            <th>状态</th>
+            <th id="th-record-action" style="min-width:80px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="record-body">
+          <tr><td colspan="9" style="text-align:center;padding:40px;color:#aaa;">暂无提交记录</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 云平台 页面 ==================== -->
+<div class="tab-content" id="tab-cloud">
+
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num" id="cloud-stat-total">0</div>
+      <div class="stat-label">待办总数</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-num" id="cloud-stat-done">0</div>
+      <div class="stat-label">已完成</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-num" id="cloud-stat-progress">0</div>
+      <div class="stat-label">处理中</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">清算待办任务</div>
+      <div style="font-size:12px;color:#888;">流程节点按顺序解锁，前一步完成后方可操作下一步</div>
+    </div>
+    <div class="card-body">
+      <div id="cloud-tasks-list">
+        <div class="empty-state">
+          <div class="icon">☁️</div>
+          <p>暂无待办任务，请先在 WeFund 提交清算信息</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 清算跟踪 页面 ==================== -->
+<div class="tab-content" id="tab-track">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">清算进度跟踪</div>
+    </div>
+    <div class="card-body">
+      <div class="search-bar">
+        <input type="text" class="search-input" id="track-search" placeholder="🔍 输入产品名称或代码进行搜索..." oninput="searchTrack()">
+        <button class="btn btn-primary" onclick="searchTrack()">搜索</button>
+        <button class="btn btn-outline" onclick="showAllTrack()">显示全部</button>
+      </div>
+      <div id="track-results">
+        <div class="empty-state">
+          <div class="icon">🔍</div>
+          <p>请输入产品名称或代码进行搜索，或点击"显示全部"查看所有在跟踪的产品</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-main -->
+
+<!-- 模态框 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">操作确认</div>
+    <div class="modal-content" id="modal-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="modal-confirm" onclick="confirmAction()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 通知 -->
+<div class="toast" id="toast"></div>
+
+<!-- 清算流程查询弹窗 -->
+<div class="track-popup-overlay" id="track-popup" onclick="if(event.target===this)closeTrackPopup()">
+  <div class="track-popup">
+    <div class="track-popup-header">
+      <h3 id="track-popup-title">🔍 清算流程查询</h3>
+      <button class="track-popup-close" onclick="closeTrackPopup()">✕</button>
+    </div>
+    <div class="track-popup-body" id="track-popup-body"></div>
+  </div>
+</div>
+
+<script>
+// ==================== 权限配置 ====================
+var ADMIN_LIST = ['朱志林ZZL'];  // 管理员名单
+var currentUser = '';
+var isAdmin = false;
+
+// ==================== 数据存储 ====================
+var formRows = [];
+var records = [];
+var cloudTasks = [];
+var rowCounter = 0;
+var pendingAction = null;
+
+var STEPS = ['提交清算终止', '产品终止', '客户全部退出', '清算后子流程', '报告回传'];
+var STEP_ICONS = ['🔴', '🟠', '🟣', '🔵', '🟢'];
+var COLLECTION_STEPS = ['提交清算终止', '客户全部退出'];
+var COLLECTION_STEP_ICONS = ['🔴', '🟣'];
+
+// ==================== 登录 ====================
+document.addEventListener('DOMContentLoaded', function() {
+  // 检查是否有已保存的登录状态
+  var savedUser = sessionStorage.getItem('fof_current_user');
+  if (savedUser) {
+    doLogin(savedUser);
+  }
+
+  // 回车键登录
+  document.getElementById('login-name').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') handleLogin();
+  });
+});
+
+function handleLogin() {
+  var nameInput = document.getElementById('login-name');
+  var name = nameInput.value.trim();
+  var errorEl = document.getElementById('login-error');
+
+  if (!name) {
+    errorEl.textContent = '⚠️ 请输入您的姓名';
+    nameInput.focus();
+    return;
+  }
+  if (name.length < 2) {
+    errorEl.textContent = '⚠️ 姓名至少2个字符';
+    nameInput.focus();
+    return;
+  }
+
+  errorEl.textContent = '';
+  doLogin(name);
+}
+
+function doLogin(name) {
+  currentUser = name;
+  isAdmin = ADMIN_LIST.indexOf(name) !== -1;
+
+  // 保存登录状态（sessionStorage，关闭浏览器自动退出）
+  sessionStorage.setItem('fof_current_user', name);
+
+  // 隐藏登录界面
+  document.getElementById('login-overlay').classList.add('hidden');
+
+  // 显示主界面
+  document.getElementById('app-main').style.display = 'block';
+
+  // 更新顶栏用户信息
+  document.getElementById('user-avatar').textContent = name.charAt(0);
+  document.getElementById('user-name-display').textContent = name;
+
+  var roleTag = document.getElementById('user-role-tag');
+  if (isAdmin) {
+    roleTag.textContent = '👑 管理员';
+    roleTag.className = 'user-role role-admin';
+  } else {
+    roleTag.textContent = '协作者';
+    roleTag.className = 'user-role role-collab';
+  }
+
+  // 权限控制
+  applyPermissions();
+
+  // 加载数据并渲染
+  loadData();
+  addFormRow();
+  renderRecords();
+  renderCloud();
+  updateStats();
+}
+
+function handleLogout() {
+  currentUser = '';
+  isAdmin = false;
+  sessionStorage.removeItem('fof_current_user');
+
+  document.getElementById('app-main').style.display = 'none';
+  document.getElementById('login-overlay').classList.remove('hidden');
+  document.getElementById('login-name').value = '';
+  document.getElementById('login-name').focus();
+}
+
+function applyPermissions() {
+  var btnCloud = document.getElementById('tab-btn-cloud');
+  var btnTrack = document.getElementById('tab-btn-track');
+  var btnClear = document.getElementById('btn-clear-all');
+  var recordsTitle = document.getElementById('records-title');
+
+  if (isAdmin) {
+    // 管理员：全部功能可用
+    btnCloud.style.display = '';
+    btnTrack.style.display = '';
+    btnClear.style.display = '';
+    document.getElementById('th-record-action').style.display = '';
+    recordsTitle.textContent = '提交记录查看（全部）';
+  } else {
+    // 普通协作者：只能看 WeFund
+    btnCloud.style.display = 'none';
+    btnTrack.style.display = 'none';
+    btnClear.style.display = 'none';
+    document.getElementById('th-record-action').style.display = 'none';
+    recordsTitle.textContent = '我的提交记录';
+
+    // 切回 WeFund 标签
+    switchTab('wefund', document.querySelector('[data-tab="wefund"]'));
+  }
+}
+
+// ==================== 数据加载 ====================
+function loadData() {
+  try {
+    records = JSON.parse(localStorage.getItem('fof_records') || '[]');
+    cloudTasks = JSON.parse(localStorage.getItem('fof_cloud') || '[]');
+  } catch(e) { records = []; cloudTasks = []; }
+}
+
+function saveData() {
+  localStorage.setItem('fof_records', JSON.stringify(records));
+  localStorage.setItem('fof_cloud', JSON.stringify(cloudTasks));
+}
+
+// 获取当前用户可见的记录
+function getMyRecords() {
+  if (isAdmin) return records;
+  return records.filter(function(r) { return r.submitBy === currentUser; });
+}
+
+// 获取当前用户可见的云任务
+function getMyCloudTasks() {
+  if (isAdmin) return cloudTasks;
+  return cloudTasks.filter(function(t) { return t.submitBy === currentUser; });
+}
+
+// ==================== 标签页切换 ====================
+function switchTab(tab, btnEl) {
+  document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (btnEl) btnEl.classList.add('active');
+
+  if (tab === 'cloud') { renderCloud(); }
+  if (tab === 'track') { showAllTrack(); }
+}
+
+// ==================== WeFund 表单 ====================
+function addFormRow() {
+  rowCounter++;
+  var id = rowCounter;
+  formRows.push(id);
+  var tbody = document.getElementById('form-body');
+  var tr = document.createElement('tr');
+  tr.id = 'row-' + id;
+  tr.innerHTML =
+    '<td style="text-align:center;color:#aaa;font-size:12px;">' + id + '</td>' +
+    '<td><input type="text" class="form-input" id="name-' + id + '" placeholder="请输入产品名称"></td>' +
+    '<td><input type="text" class="form-input" id="code-' + id + '" placeholder="如：FOF001"></td>' +
+    '<td><select class="form-select" id="liq-' + id + '" onchange="toggleReason(' + id + ')">' +
+      '<option value="">-- 请选择 --</option>' +
+      '<option value="是">是</option>' +
+      '<option value="否">否</option>' +
+    '</select></td>' +
+    '<td><select class="form-select" id="reason-' + id + '" disabled>' +
+      '<option value="">-- 请先选择是否清算 --</option>' +
+            '<option value="份额赎回">份额赎回</option>' +
+            '<option value="协商一致">协商一致</option>' +
+            '<option value="连续5个工作日少于2人">连续5个工作日少于2人</option>' +
+    '</select></td>' +
+    '<td><input type="date" class="form-input" id="date-' + id + '" disabled></td>' +
+    '<td><input type="datetime-local" class="form-input" id="fundDate-' + id + '" disabled></td>' +
+    '<td><button class="btn btn-danger btn-sm" onclick="removeRow(' + id + ')">删除</button></td>';
+  tbody.appendChild(tr);
+}
+
+function toggleReason(id) {
+  var liq = document.getElementById('liq-' + id).value;
+  var reasonEl = document.getElementById('reason-' + id);
+  var dateEl = document.getElementById('date-' + id);
+  var fundDateEl = document.getElementById('fundDate-' + id);
+  if (liq === '是') {
+    reasonEl.disabled = false;
+    reasonEl.options[0].text = '-- 请选择清算原因 --';
+    dateEl.disabled = false;
+    fundDateEl.disabled = false;
+  } else {
+    reasonEl.disabled = true;
+    reasonEl.value = '';
+    reasonEl.options[0].text = '-- 请先选择是否清算 --';
+    dateEl.disabled = true;
+    dateEl.value = '';
+    fundDateEl.disabled = true;
+    fundDateEl.value = '';
+  }
+}
+
+function removeRow(id) {
+  var row = document.getElementById('row-' + id);
+  if (row) row.remove();
+  formRows = formRows.filter(function(r) { return r !== id; });
+  if (formRows.length === 0) addFormRow();
+}
+
+function clearForm() {
+  document.getElementById('form-body').innerHTML = '';
+  formRows = [];
+  rowCounter = 0;
+  addFormRow();
+}
+
+function submitForm() {
+  if (!currentUser) { showToast('请先登录', 'error'); return; }
+
+  var rows = document.querySelectorAll('#form-body tr');
+  var submitted = 0;
+  var errors = [];
+
+  rows.forEach(function(row) {
+    var idMatch = row.id.match(/row-(\d+)/);
+    if (!idMatch) return;
+    var id = idMatch[1];
+
+    var name = document.getElementById('name-' + id).value.trim();
+    var code = document.getElementById('code-' + id).value.trim();
+    var liq = document.getElementById('liq-' + id).value;
+    var reason = document.getElementById('reason-' + id).value;
+    var date = document.getElementById('date-' + id).value;
+    var fundDate = document.getElementById('fundDate-' + id).value;
+
+    if (!name || !code || !liq) {
+      if (name || code) errors.push('第' + id + '行：产品名称、代码、是否清算为必填项');
+      return;
+    }
+
+    var now = new Date().toLocaleString('zh-CN');
+    var record = {
+      id: 'REC-' + Date.now() + '-' + id,
+      submitTime: now,
+      submitBy: currentUser,
+      name: name, code: code, liq: liq, reason: reason, date: date, fundDate: fundDate,
+      status: '待处理'
+    };
+    records.unshift(record);
+    submitted++;
+
+    // 如果选择清算，同步到云平台待办
+    if (liq === '是') {
+      cloudTasks.unshift({
+        id: 'TASK-' + Date.now() + '-' + id,
+        recordId: record.id,
+        name: name, code: code, reason: reason, date: date, fundDate: fundDate,
+        source: 'WeFund',
+        submitBy: currentUser,
+        isCollection: name.includes('集合'),
+        submitTime: now,
+        currentStep: 0,
+        stepDates: {},
+        completed: false
+      });
+    }
+  });
+
+  if (errors.length > 0) {
+    showToast('⚠️ ' + errors[0], 'warning');
+    return;
+  }
+  if (submitted === 0) {
+    showToast('请至少填写一行有效数据', 'error');
+    return;
+  }
+
+  saveData();
+  clearForm();
+  renderRecords();
+  renderCloud();
+  updateStats();
+  showToast('✅ 成功提交 ' + submitted + ' 条记录，已同步至云平台');
+}
+
+// ==================== 提交记录 ====================
+function renderRecords(data) {
+  var list = data || getMyRecords();
+  var tbody = document.getElementById('record-body');
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#aaa;">暂无提交记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(r) {
+    var liqTag = r.liq === '是' ? 'tag-yes' : 'tag-no';
+    var reasonTag = r.reason === '份额赎回' ? 'tag-redeem' : (r.reason === '协商一致' ? 'tag-agree' : (r.reason === '连续5个工作日少于2人' ? 'tag-below2' : ''));
+    var statusTag = r.status === '待处理' ? 'tag-pending' : 'tag-done';
+    // 如果是清算产品且有对应云任务，显示查询按钮
+    var queryBtn = '';
+    if (r.liq === '是') {
+      var task = cloudTasks.find(function(t) { return t.recordId === r.id; });
+      if (task) {
+        queryBtn = ' <button class="btn btn-info btn-sm" onclick="showTrackPopup(\'' + r.id + '\')" title="查看清算流程节点">🔍 查询</button>';
+      }
+    }
+    return '<tr>' +
+      '<td style="color:#888;font-size:12px;">' + r.submitTime + '</td>' +
+      '<td><strong>' + r.name + '</strong></td>' +
+      '<td style="font-family:monospace;color:#555;">' + r.code + '</td>' +
+      '<td><span class="tag ' + liqTag + '">' + r.liq + '</span></td>' +
+      '<td><span class="tag ' + reasonTag + '">' + (r.reason || '—') + '</span></td>' +
+      '<td style="color:#555;">' + (r.date || '—') + '</td>' +
+      '<td style="color:#555;">' + (r.fundDate ? formatFundDate(r.fundDate) : '—') + '</td>' +
+      '<td><span class="tag ' + statusTag + '">' + r.status + '</span>' + queryBtn + '</td>' +
+      (isAdmin ? '<td><button class="btn btn-danger btn-sm" onclick="deleteRecord(\'' + r.id + '\')" title="删除此条记录">删除</button></td>' : '') +
+    '</tr>';
+  }).join('');
+}
+
+function filterRecords() {
+  var q = document.getElementById('record-search').value.toLowerCase();
+  var baseList = getMyRecords();
+  if (!q) { renderRecords(); return; }
+  var filtered = baseList.filter(function(r) {
+    return r.name.toLowerCase().includes(q) || r.code.toLowerCase().includes(q);
+  });
+  renderRecords(filtered);
+}
+
+function deleteRecord(recordId) {
+  if (!isAdmin) {
+    showToast('⚠️ 仅管理员可删除记录', 'error');
+    return;
+  }
+  var rec = records.find(function(r) { return r.id === recordId; });
+  if (!rec) return;
+  pendingAction = { action: 'deleteRecord', recordId: recordId };
+  showModal(
+    '确认删除记录',
+    '<p style="color:#dc2626;font-weight:600;">⚠️ 即将删除以下记录：</p>' +
+    '<p style="margin-top:8px;">产品：<strong>' + rec.name + '</strong>（' + rec.code + '）</p>' +
+    '<p style="color:#888;font-size:13px;">提交时间：' + rec.submitTime + '</p>' +
+    '<p style="margin-top:8px;color:#888;font-size:13px;">该操作将同时删除对应的云平台待办任务，删除后不可恢复。</p>'
+  );
+}
+
+function clearAllData() {
+  if (!isAdmin) {
+    showToast('⚠️ 仅管理员可执行此操作', 'error');
+    return;
+  }
+  pendingAction = { action: 'clearAll' };
+  showModal(
+    '确认清除所有数据',
+    '<p style="color:#dc2626;font-weight:600;">⚠️ 此操作将清除所有提交记录和云平台待办数据！</p>' +
+    '<p style="margin-top:8px;color:#888;font-size:13px;">包括 WeFund 提交记录、云平台待办任务及其流程进度，清除后不可恢复。</p>'
+  );
+}
+
+function exportRecords() {
+  var exportList = getMyRecords();
+  if (exportList.length === 0) { showToast('暂无记录可导出', 'warning'); return; }
+  var header = ['提交时间','产品名称','产品代码','是否清算','清算原因','日期','清算资金到账时间','提交人','状态'];
+  var rows = exportList.map(function(r) { return [r.submitTime, r.name, r.code, r.liq, r.reason||'', r.date||'', r.fundDate?formatFundDate(r.fundDate):'', r.submitBy||'', r.status]; });
+  var csv = [header].concat(rows).map(function(r) { return r.map(function(v) { return '"' + v + '"'; }).join(','); }).join('\n');
+  var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'FOF清算记录_' + new Date().toLocaleDateString('zh-CN').replace(/\//g,'-') + '.csv';
+  a.click();
+  showToast('📥 导出成功');
+}
+
+// ==================== 云平台（卡片式待办 + 5按钮顺序逻辑） ====================
+function renderCloud() {
+  var container = document.getElementById('cloud-tasks-list');
+  updateCloudStats();
+
+  var visibleTasks = getMyCloudTasks();
+
+  if (visibleTasks.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">☁️</div><p>暂无待办任务，请先在 WeFund 提交清算信息</p></div>';
+    return;
+  }
+
+  container.innerHTML = visibleTasks.map(function(task, idx) {
+    // 在可见列表中的索引
+    var globalIdx = cloudTasks.indexOf(task);
+
+    var isCollection = task.isCollection;
+    var taskSteps = isCollection ? COLLECTION_STEPS : STEPS;
+    var taskIcons = isCollection ? COLLECTION_STEP_ICONS : STEP_ICONS;
+    var pct = Math.round((task.currentStep / taskSteps.length) * 100);
+
+    var flowHtml = '<div class="flow-steps">';
+    taskSteps.forEach(function(step, si) {
+      var stepNo = si + 1;
+      var isDone = task.currentStep >= stepNo;
+      var isActive = (task.currentStep === si) && !task.completed;
+      var isLocked = task.currentStep < si;
+
+      var btnClass = 'locked';
+      var btnLabel = taskIcons[si] + ' ' + step;
+      var dateStr = '';
+
+      if (isDone) {
+        btnClass = 'done-step';
+        btnLabel = '✅ ' + step;
+        dateStr = task.stepDates['step' + stepNo] || '';
+      } else if (isActive) {
+        btnClass = 'active';
+      }
+
+      flowHtml += '<div class="flow-step">' +
+        '<button class="flow-step-btn ' + btnClass + '" ' +
+          (isActive ? 'onclick="handleStep(' + globalIdx + ', ' + stepNo + ')" title="点击执行：' + step + '"' : 'title="' + (isDone ? '已完成' : '请先完成前置步骤') + '"') +
+        '>' + btnLabel + '</button>' +
+        (dateStr ? '<div class="flow-step-date">✓ ' + dateStr + '</div>' : '') +
+      '</div>';
+
+      if (si < taskSteps.length - 1) {
+        var arrowDone = task.currentStep >= stepNo;
+        flowHtml += '<div class="flow-arrow ' + (arrowDone ? 'done-arrow' : '') + '">→</div>';
+      }
+    });
+    flowHtml += '</div>';
+
+    var collectionBadge = isCollection ? '<span class="tag tag-below2" style="margin-left:8px;">集合产品</span>' : '';
+    // 提交人标签（管理员可见）
+    var submitByTag = isAdmin && task.submitBy ? '<div class="todo-meta-item"><span class="todo-meta-label">提交人：</span><span class="tag tag-collab">' + task.submitBy + '</span></div>' : '';
+
+    return '<div class="todo-card">' +
+      '<div class="todo-card-top">' +
+        '<div class="todo-product-info">' +
+          '<div class="todo-product-name">' + task.name + collectionBadge + '</div>' +
+          '<div class="todo-meta">' +
+            '<div class="todo-meta-item"><span class="todo-meta-label">产品代码：</span><span class="todo-meta-value" style="font-family:monospace;">' + task.code + '</span></div>' +
+            '<div class="todo-meta-item"><span class="todo-meta-label">清算原因：</span><span class="tag ' + getReasonTagClass(task.reason) + '">' + (task.reason || '—') + '</span></div>' +
+            '<div class="todo-meta-item"><span class="todo-meta-label">' + getDateLabel(task.reason) + '日期：</span><span class="todo-meta-value">' + (task.date || '—') + '</span></div>' +
+            (task.fundDate ? '<div class="todo-meta-item"><span class="todo-meta-label">资金到账时间：</span><span class="todo-meta-value">' + formatFundDate(task.fundDate) + '</span></div>' : '') +
+            '<div class="todo-meta-item"><span class="todo-meta-label">来源：</span><span class="tag tag-redeem">' + task.source + '</span></div>' +
+            '<div class="todo-meta-item"><span class="todo-meta-label">提交时间：</span><span class="todo-meta-value">' + task.submitTime + '</span></div>' +
+            submitByTag +
+          '</div>' +
+        '</div>' +
+        '<div class="todo-status-area">' +
+          '<div class="todo-progress-text ' + (task.completed ? 'done' : '') + '">' + pct + '%</div>' +
+          '<div style="font-size:11px;color:#888;">' + task.currentStep + '/' + taskSteps.length + ' 步</div>' +
+          '<div><span class="tag ' + (task.completed ? 'tag-done' : (task.currentStep > 0 ? 'tag-partial' : 'tag-pending')) + '">' +
+            (task.completed ? '✓ 全部完成' : (task.currentStep > 0 ? '处理中' : '待开始')) +
+          '</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="todo-flow">' +
+        '<div class="todo-flow-label">📋 清算流程操作</div>' +
+        flowHtml +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function handleStep(taskIdx, stepNo) {
+  var task = cloudTasks[taskIdx];
+  if (!task) return;
+  // 非管理员只能操作自己提交的任务
+  if (!isAdmin && task.submitBy !== currentUser) {
+    showToast('⚠️ 只能操作自己提交的任务', 'error');
+    return;
+  }
+  var taskSteps = task.isCollection ? COLLECTION_STEPS : STEPS;
+  if (task.currentStep >= stepNo) {
+    showToast('该步骤已完成', 'warning');
+    return;
+  }
+  if (task.currentStep !== stepNo - 1) {
+    showToast('请先完成前置步骤', 'error');
+    return;
+  }
+
+  pendingAction = { taskIdx: taskIdx, stepNo: stepNo };
+  showModal(
+    '确认：' + taskSteps[stepNo - 1],
+    '<p>产品：<strong>' + task.name + '</strong>（' + task.code + '）</p>' +
+    '<p style="margin-top:8px;">即将执行：<strong style="color:#2563a8;">' + taskSteps[stepNo - 1] + '</strong></p>' +
+    '<p style="margin-top:8px;color:#888;font-size:13px;">此操作将推进清算流程至第 ' + stepNo + ' 步，确认后不可撤销。</p>'
+  );
+}
+
+function confirmAction() {
+  if (!pendingAction) return;
+
+  // 清除全部数据
+  if (pendingAction.action === 'clearAll') {
+    records = [];
+    cloudTasks = [];
+    saveData();
+    closeModal();
+    renderRecords();
+    renderCloud();
+    updateStats();
+    pendingAction = null;
+    showToast('🗑️ 所有数据已清除');
+    return;
+  }
+
+  // 删除单条记录
+  if (pendingAction.action === 'deleteRecord') {
+    var recordId = pendingAction.recordId;
+    var rec = records.find(function(r) { return r.id === recordId; });
+    // 从 records 中删除
+    records = records.filter(function(r) { return r.id !== recordId; });
+    // 同时删除对应的云平台待办任务
+    cloudTasks = cloudTasks.filter(function(t) { return t.recordId !== recordId; });
+    saveData();
+    closeModal();
+    renderRecords();
+    renderCloud();
+    updateStats();
+    pendingAction = null;
+    showToast('🗑️ 已删除记录' + (rec ? '：' + rec.name : ''));
+    return;
+  }
+
+  var taskIdx = pendingAction.taskIdx;
+  var stepNo = pendingAction.stepNo;
+  var task = cloudTasks[taskIdx];
+  if (!task) return;
+
+  var taskSteps = task.isCollection ? COLLECTION_STEPS : STEPS;
+
+  task.currentStep = stepNo;
+  task.stepDates['step' + stepNo] = new Date().toLocaleDateString('zh-CN');
+  if (stepNo === taskSteps.length) task.completed = true;
+
+  // 同步 WeFund 记录状态
+  var rec = records.find(function(r) { return r.id === task.recordId; });
+  if (rec) {
+    rec.status = task.completed ? '已完成' : '处理中';
+  }
+
+  saveData();
+  closeModal();
+  renderCloud();
+  renderRecords();
+  updateStats();
+  showToast('✅ ' + taskSteps[stepNo - 1] + ' 操作成功');
+  pendingAction = null;
+}
+
+function updateCloudStats() {
+  var visibleTasks = getMyCloudTasks();
+  document.getElementById('cloud-stat-total').textContent = visibleTasks.length;
+  document.getElementById('cloud-stat-done').textContent = visibleTasks.filter(function(t) { return t.completed; }).length;
+  document.getElementById('cloud-stat-progress').textContent = visibleTasks.filter(function(t) { return !t.completed && t.currentStep > 0; }).length;
+}
+
+// ==================== 清算流程查询弹窗 ====================
+function showTrackPopup(recordId) {
+  var task = cloudTasks.find(function(t) { return t.recordId === recordId; });
+  if (!task) {
+    showToast('未找到该产品的清算流程数据', 'warning');
+    return;
+  }
+
+  var rec = records.find(function(r) { return r.id === recordId; });
+  var isCollection = task.isCollection;
+  var taskSteps = isCollection ? COLLECTION_STEPS : STEPS;
+  var taskIcons = isCollection ? COLLECTION_STEP_ICONS : STEP_ICONS;
+
+  // 标题
+  document.getElementById('track-popup-title').textContent = '🔍 ' + task.name + ' 清算流程';
+
+  // 构建流程节点（与清算跟踪页面一致）
+  var steps = taskSteps.map(function(s, i) {
+    var stepNo = i + 1;
+    var isDone = task.currentStep >= stepNo;
+    var isActive = task.currentStep === i;
+    var dotClass = isDone ? 'done' : (isActive ? 'active' : 'pending');
+    var labelClass = isDone ? 'done' : (isActive ? 'active' : '');
+    var dateStr = (task.stepDates && task.stepDates['step' + stepNo]) ? task.stepDates['step' + stepNo] : '';
+    var dotContent = isDone ? '✓' : stepNo;
+    return '<div class="step-item">' +
+      '<div class="step-dot ' + dotClass + '">' + dotContent + '</div>' +
+      '<div class="step-label ' + labelClass + '">' + s + '</div>' +
+      '<div class="step-date">' + dateStr + '</div>' +
+    '</div>';
+  }).join('');
+
+  var progressPct = Math.round((task.currentStep / taskSteps.length) * 100);
+  var dateLabel = getDateLabel(task.reason);
+  var collectionBadge = isCollection ? ' <span class="tag tag-below2">集合产品</span>' : '';
+
+  var bodyHtml =
+    '<div style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">' +
+      '<div>' +
+        '<div style="font-size:15px;font-weight:700;color:#1a3a5c;">' + task.name + collectionBadge + '</div>' +
+        '<div style="font-size:12px;color:#888;margin-top:4px;">产品代码：' + task.code + ' | 来源：' + task.source + ' | 提交时间：' + task.submitTime + '</div>' +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<div style="font-size:11px;color:#888;">整体进度</div>' +
+        '<div style="font-size:22px;font-weight:700;color:' + (task.completed ? '#16a34a' : '#2563a8') + ';">' + progressPct + '%</div>' +
+        '<span class="tag ' + (task.completed ? 'tag-done' : (task.currentStep > 0 ? 'tag-partial' : 'tag-pending')) + '">' +
+          (task.completed ? '✓ 已完成' : (task.currentStep > 0 ? '处理中' : '待开始')) +
+        '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-bottom:12px;">' +
+      '<div style="background:#e0e4ea;height:6px;border-radius:3px;overflow:hidden;">' +
+        '<div style="background:' + (task.completed ? '#16a34a' : '#2563a8') + ';height:100%;width:' + progressPct + '%;border-radius:3px;transition:width 0.4s;"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="progress-steps">' + steps + '</div>' +
+    '<div style="margin-top:14px;padding:12px 16px;background:#f8faff;border-radius:8px;font-size:13px;color:#555;">' +
+      '清算原因：<strong>' + (task.reason || '—') + '</strong>&nbsp;&nbsp;|&nbsp;&nbsp;' +
+      dateLabel + '日期：<strong>' + (task.date || '—') + '</strong>' +
+      (task.fundDate ? '&nbsp;&nbsp;|&nbsp;&nbsp;资金到账时间：<strong>' + formatFundDate(task.fundDate) + '</strong>' : '') +
+    '</div>';
+
+  document.getElementById('track-popup-body').innerHTML = bodyHtml;
+  document.getElementById('track-popup').classList.add('show');
+}
+
+function closeTrackPopup() {
+  document.getElementById('track-popup').classList.remove('show');
+}
+
+// ==================== 清算跟踪 ====================
+function renderTrack(data) {
+  var list = (data !== undefined) ? data : getMyCloudTasks();
+  var container = document.getElementById('track-results');
+
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>未找到相关产品，请检查搜索关键词</p></div>';
+    return;
+  }
+
+  container.innerHTML = list.map(function(task) {
+    var isCollection = task.isCollection;
+    var taskSteps = isCollection ? COLLECTION_STEPS : STEPS;
+
+    var steps = taskSteps.map(function(s, i) {
+      var stepNo = i + 1;
+      var isDone = task.currentStep >= stepNo;
+      var isActive = task.currentStep === i;
+      var dotClass = isDone ? 'done' : (isActive ? 'active' : 'pending');
+      var labelClass = isDone ? 'done' : (isActive ? 'active' : '');
+      var dateStr = (task.stepDates && task.stepDates['step' + stepNo]) ? task.stepDates['step' + stepNo] : '';
+      var dotContent = isDone ? '✓' : stepNo;
+      return '<div class="step-item">' +
+        '<div class="step-dot ' + dotClass + '">' + dotContent + '</div>' +
+        '<div class="step-label ' + labelClass + '">' + s + '</div>' +
+        '<div class="step-date">' + dateStr + '</div>' +
+      '</div>';
+    }).join('');
+
+    var progressPct = Math.round((task.currentStep / taskSteps.length) * 100);
+    var dateLabel = getDateLabel(task.reason);
+    var collectionBadge = isCollection ? ' <span class="tag tag-below2">集合产品</span>' : '';
+    var submitByInfo = isAdmin && task.submitBy ? '&nbsp;&nbsp;|&nbsp;&nbsp;提交人：<strong>' + task.submitBy + '</strong>' : '';
+
+    return '<div class="track-card">' +
+      '<div class="track-header">' +
+        '<div>' +
+          '<div class="track-title">' + task.name + collectionBadge + '</div>' +
+          '<div class="track-code">代码：' + task.code + ' &nbsp;|&nbsp; 来源：' + task.source + ' &nbsp;|&nbsp; 提交时间：' + task.submitTime + submitByInfo + '</div>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div style="font-size:13px;color:#888;">整体进度</div>' +
+          '<div style="font-size:22px;font-weight:700;color:' + (task.completed ? '#16a34a' : '#2563a8') + ';">' + progressPct + '%</div>' +
+          '<span class="tag ' + (task.completed ? 'tag-done' : (task.currentStep > 0 ? 'tag-partial' : 'tag-pending')) + '">' +
+            (task.completed ? '✓ 已完成' : (task.currentStep > 0 ? '处理中' : '待开始')) +
+          '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="track-body">' +
+        '<div style="margin-bottom:10px;">' +
+          '<div style="background:#e0e4ea;height:6px;border-radius:3px;overflow:hidden;">' +
+            '<div style="background:' + (task.completed ? '#16a34a' : '#2563a8') + ';height:100%;width:' + progressPct + '%;border-radius:3px;transition:width 0.4s;"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="progress-steps">' + steps + '</div>' +
+        '<div style="margin-top:12px;padding:10px 14px;background:#f8faff;border-radius:8px;font-size:13px;color:#555;">' +
+          '清算原因：<strong>' + (task.reason || '—') + '</strong>&nbsp;&nbsp;|&nbsp;&nbsp;' +
+          dateLabel + '日期：<strong>' + (task.date || '—') + '</strong>' +
+          (task.fundDate ? '&nbsp;&nbsp;|&nbsp;&nbsp;资金到账时间：<strong>' + formatFundDate(task.fundDate) + '</strong>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// 格式化资金到账时间
+function formatFundDate(dt) {
+  if (!dt) return '—';
+  return dt.replace('T', ' ');
+}
+
+// 清算原因对应的 tag 样式
+function getReasonTagClass(reason) {
+  if (reason === '份额赎回') return 'tag-redeem';
+  if (reason === '协商一致') return 'tag-agree';
+  if (reason === '连续5个工作日少于2人') return 'tag-below2';
+  return 'tag-pending';
+}
+
+// 清算原因对应的日期标签
+function getDateLabel(reason) {
+  if (reason === '份额赎回') return '赎回';
+  if (reason === '协商一致') return '协商一致';
+  if (reason === '连续5个工作日少于2人') return '触发';
+  return '赎回/协商一致';
+}
+
+function searchTrack() {
+  var q = document.getElementById('track-search').value.trim().toLowerCase();
+  if (!q) { showAllTrack(); return; }
+  var baseList = getMyCloudTasks();
+  var filtered = baseList.filter(function(t) {
+    return t.name.toLowerCase().includes(q) || t.code.toLowerCase().includes(q);
+  });
+  renderTrack(filtered);
+}
+
+function showAllTrack() {
+  renderTrack();
+}
+
+// ==================== 统计更新 ====================
+function updateStats() {
+  var visibleRecords = getMyRecords();
+  var visibleTasks = getMyCloudTasks();
+  document.getElementById('stat-total').textContent = visibleRecords.length;
+  document.getElementById('stat-liq').textContent = visibleTasks.length;
+  document.getElementById('stat-pending').textContent = visibleRecords.filter(function(r) { return r.status === '待处理'; }).length;
+  updateBadge();
+}
+
+function updateBadge() {
+  var pending = cloudTasks.filter(function(t) { return !t.completed; }).length;
+  var badge = document.getElementById('cloud-badge');
+  badge.textContent = pending;
+  badge.style.display = pending > 0 ? 'inline-block' : 'none';
+}
+
+// ==================== 模态框 ====================
+function showModal(title, content) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-content').innerHTML = content;
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+  pendingAction = null;
+}
+
+// ==================== Toast ====================
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type && type !== 'success' ? ' ' + type : '');
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
+
+// 点击模态框背景关闭
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
